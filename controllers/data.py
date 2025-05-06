@@ -5,6 +5,7 @@ from models.endpoints import Endpoints
 
 API_TOKEN = os.getenv("ROBOT_API_KEY")
 
+
 class RobotEvents:
     BASE_URL = "https://www.robotevents.com/api/v2"
 
@@ -17,7 +18,7 @@ class RobotEvents:
     def fetch(self, endpoint: Endpoints, **kwargs):
         """
         Generic fetch function that handles all API requests
-        
+
         Args:
             endpoint: Endpoint object from Endpoints enum
             **kwargs: Additional parameters including:
@@ -26,32 +27,30 @@ class RobotEvents:
         """
         # Get the endpoint path pattern
         url_pattern = f"{self.BASE_URL}{endpoint.value}"
-        
+
         # Replace any path parameters in the URL
-        path_params = kwargs.get('path_params', {})
+        path_params = kwargs.get("path_params", {})
         try:
             url = url_pattern.format(**path_params) if path_params else url_pattern
         except KeyError as e:
-            # Map specific keys based on endpoint 
-            if 'team_id' in path_params and str(e) == "'id'":
+            # Map specific keys based on endpoint
+            if "team_id" in path_params and str(e) == "'id'":
                 # If team_id is provided but the URL expects 'id'
-                path_params['id'] = path_params['team_id']
+                path_params["id"] = path_params["team_id"]
                 url = url_pattern.format(**path_params)
             else:
                 raise KeyError(f"Missing required path parameter: {e}")
-        
+
         # Extract query params if present
-        params = kwargs.get('params', None)
-        
+        params = kwargs.get("params", None)
+
         # Make the GET request
-        try: 
+        try:
             response = requests.get(url, headers=self.headers, params=params)
             return self._handle_response(response)
         except requests.exceptions.RequestException as e:
             print(f"ERROR querying {url}:\n{e}")
-        except requests.exceptions.HTTPError as e:
-            pass
-        return 
+        return
 
     def _handle_response(self, response):
         if response.status_code == 200:
@@ -62,23 +61,21 @@ class RobotEvents:
 
 if __name__ == "__main__":
     controller = RobotEvents()
-    
+
     # Example of getting data for a single team
     # Using a specific team ID (e.g. 1234)
     team_id = 171256
     per_page = 50
-    team_data = controller.fetch(
-        Endpoints.TEAM_DETAIL, 
-        path_params={"team_id": team_id}
-    )
+    team_data = controller.fetch(Endpoints.TEAM, path_params={"team_id": team_id})
     print(f"Team {team_id} details:")
     pprint.pprint(team_data)
-    
+
     # You can also fetch team's events
     team_events = controller.fetch(
-        Endpoints.TEAM_EVENTS, 
+        Endpoints.TEAM_EVENTS,
         path_params={"team_id": team_id},
-        params={"per_page": per_page}
+        params={"per_page": per_page},
     )
     print(f"\nEvents for team {team_id}:")
     pprint.pprint(team_events)
+
